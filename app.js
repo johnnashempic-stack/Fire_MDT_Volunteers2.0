@@ -293,9 +293,14 @@ function updateMap() {
 
       const m = L.marker([call.lat, call.lng], { icon })
         .addTo(map)
-        .bindPopup(
-          `<strong>\( {call.type}</strong><br> \){call.location}<br>Status: \( {call.status}<br> \){call.description || ""}`
-        );
+        .bindPopup(`
+          <div style="min-width:180px; line-height:1.4">
+            <strong style="font-size:14px">${call.type}</strong><br>
+            📍 ${call.location}<br>
+            <b>Status:</b> ${call.status}<br>
+            ${call.description ? call.description : ""}
+          </div>
+        `);
       markers[call.id] = m;
     }
   });
