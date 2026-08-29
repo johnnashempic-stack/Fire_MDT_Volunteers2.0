@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BFP / FD Advanced MDT & CAD</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <h1>🚒 BFP / FD MDT</h1>
+      <p class="subtitle">Advanced Mobile Data Terminal & CAD</p>
+      <label for="loginUser">Username</label>
+      <input type="text" id="loginUser" placeholder="dispatch / resp1 …" autocomplete="username" />
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
+      <button class="btn" onclick="login()">Log In</button>
+      <div class="accounts-hint">
+        <strong>Demo Accounts</strong><br>
+        Dispatch: <code>dispatch</code> / <code>dispatch2024</code><br>
+        Responders: <code>resp1</code>–<code>resp5</code> / <code>resp123</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="logo">
+        🚒 BFP MDT
+        <span id="userBadge">—</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary" id="toggleMapBtn" onclick="toggleMap()">🗺️ Map</button>
+        <button class="btn btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="main">
+      <!-- LEFT CONTENT -->
+      <div class="content">
+        <!-- ========== DISPATCH PANEL ========== -->
+        <div id="dispatchPanel" class="hidden">
+          <div class="panel-title">📡 911 / CAD Dispatcher Console</div>
+
+          <div class="section">
+            <h3>Create New Call / Incident</h3>
+            <div class="form-row">
+              <select id="callType">
+                <option value="Structure Fire">Structure Fire</option>
+                <option value="Grass / Brush Fire">Grass / Brush Fire</option>
+                <option value="Vehicle Fire">Vehicle Fire</option>
+                <option value="Vehicle Accident">Vehicle Accident</option>
+                <option value="Medical Assist">Medical Assist</option>
+                <option value="Hazmat">Hazmat</option>
+                <option value="Rescue">Rescue</option>
+                <option value="False Alarm">False Alarm</option>
+                <option value="Other">Other</option>
+              </select>
+              <input type="text" id="callLocation" placeholder="Location / Address" />
+            </div>
+            <div class="form-row">
+              <textarea id="callDesc" placeholder="Description / additional info"></textarea>
+            </div>
+            <div class="form-row">
+              <input type="text" id="callLat" placeholder="Latitude" readonly />
+              <input type="text" id="callLng" placeholder="Longitude" readonly />
+            </div>
+            <div class="form-row">
+              <button class="btn btn-sm btn-secondary" onclick="getMyLocation(false)">📍 GPS</button>
+              <button class="btn btn-sm btn-secondary" id="pinCallBtn" onclick="startPinMode('call')">📌 Pin on Map</button>
+            </div>
+            <button class="btn" onclick="createCall()">Create Call</button>
+          </div>
+
+          <div class="section">
+            <h3>Calls / Incidents</h3>
+            <div id="dispatchCallList"></div>
+          </div>
+
+          <div class="section">
+            <h3>Unit Status</h3>
+            <div id="unitList"></div>
+          </div>
+
+          <div class="section">
+            <h3>Reports from Responders</h3>
+            <div id="dispatchReports"></div>
+          </div>
+
+          <div class="section">
+            <h3>Broadcast / Relay Info</h3>
+            <div id="dispatchMessages"></div>
+            <div class="msg-input-row">
+              <input type="text" id="dispatchMsgInput" placeholder="Type message…" />
+              <button class="btn btn-sm" onclick="sendMessage()">Send</button>
+            </div>
+            <div class="voice-row">
+              <button class="btn btn-sm btn-secondary" id="recBtn" onclick="toggleRecord()">🎤 Record Voice</button>
+              <span id="recStatus"></span>
+              <button class="btn btn-sm" id="sendVoiceBtn" onclick="sendVoice()" style="display:none;">Send Voice</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== RESPONDER MDT PANEL ========== -->
+        <div id="responderPanel" class="hidden">
+          <div class="panel-title">📱 Responder MDT</div>
+
+          <div class="section">
+            <h3>My Unit Status</h3>
+            <div id="myStatus"></div>
+          </div>
+
+          <div class="section">
+            <h3>Active Calls</h3>
+            <div id="responderCallList"></div>
+          </div>
+
+          <div class="section">
+            <h3>Report Incident or Info</h3>
+            <div class="form-row">
+              <textarea id="reportText" placeholder="What do you need to report?"></textarea>
+            </div>
+            <div class="form-row">
+              <input type="text" id="reportLocation" placeholder="Location (optional)" />
+            </div>
+            <div class="form-row">
+              <button class="btn btn-sm btn-secondary" onclick="getMyLocation(true)">📍 GPS</button>
+              <button class="btn btn-sm btn-secondary" id="pinReportBtn" onclick="startPinMode('report')">📌 Pin on Map</button>
+            </div>
+            <button class="btn" onclick="submitReport()">Submit Report</button>
+          </div>
+
+          <div class="section">
+            <h3>Messages from Dispatch</h3>
+            <div id="responderMessages"></div>
+            <div class="msg-input-row">
+              <input type="text" id="responderMsgInput" placeholder="Reply / message…" />
+              <button class="btn btn-sm" onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Recent Reports</h3>
+            <div id="responderReports"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT MAP -->
+      <div class="map-panel" id="mapPanel">
+        <div class="map-header">
+          🗺️ Active Operations Map
+          <button class="btn btn-sm btn-secondary" onclick="toggleMap()" style="float:right;">Close</button>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modalTitle">Assign Units</h3>
+      <div id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
