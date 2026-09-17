@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BFP / FD Advanced MDT & CAD</title>
+  <title>BFP / FD MDT – CAD System</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -11,17 +11,18 @@
   <!-- LOGIN -->
   <div id="loginScreen">
     <div class="login-box">
-      <h1>🚒 BFP / FD MDT</h1>
-      <p class="subtitle">Advanced Mobile Data Terminal & CAD</p>
-      <label for="loginUser">Username</label>
+      <div class="login-logo">🚒</div>
+      <h1>BFP / FD MDT</h1>
+      <p class="subtitle">Computer Aided Dispatch & Mobile Data Terminal</p>
+      <label>Username</label>
       <input type="text" id="loginUser" placeholder="dispatch / resp1 …" autocomplete="username" />
-      <label for="loginPass">Password</label>
+      <label>Password</label>
       <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
-      <button class="btn" onclick="login()">Log In</button>
+      <button class="btn btn-primary" onclick="login()">LOG IN</button>
       <div class="accounts-hint">
-        <strong>Demo Accounts</strong><br>
+        <strong>Accounts</strong><br>
         Dispatch: <code>dispatch</code> / <code>dispatch2024</code><br>
-        Responders: <code>resp1</code>–<code>resp5</code> / <code>resp123</code>
+        Units: <code>resp1</code>–<code>resp5</code> / <code>resp123</code>
       </div>
     </div>
   </div>
@@ -30,132 +31,135 @@
   <div id="app" class="hidden">
     <header class="topbar">
       <div class="logo">
-        🚒 BFP MDT
-        <span id="userBadge">—</span>
+        <span class="logo-icon">🚒</span>
+        <span class="logo-text">BFP MDT</span>
+        <span id="userBadge" class="user-badge">—</span>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-sm btn-secondary" id="toggleMapBtn" onclick="toggleMap()">🗺️ Map</button>
-        <button class="btn btn-logout" onclick="logout()">Logout</button>
+        <button class="btn btn-sm" id="toggleMapBtn" onclick="toggleMap()">MAP</button>
+        <button class="btn btn-sm btn-ghost" onclick="logout()">LOGOUT</button>
       </div>
     </header>
 
     <div class="main">
-      <!-- LEFT CONTENT -->
       <div class="content">
-        <!-- ========== DISPATCH PANEL ========== -->
+        <!-- DISPATCH -->
         <div id="dispatchPanel" class="hidden">
-          <div class="panel-title">📡 911 / CAD Dispatcher Console</div>
+          <div class="panel-header">📡 DISPATCH CONSOLE</div>
 
           <div class="section">
-            <h3>Create New Call / Incident</h3>
+            <div class="section-title">CREATE NEW INCIDENT</div>
+            
             <div class="form-row">
-              <select id="callType">
-                <option value="Structure Fire">Structure Fire</option>
-                <option value="Grass / Brush Fire">Grass / Brush Fire</option>
-                <option value="Vehicle Fire">Vehicle Fire</option>
-                <option value="Vehicle Accident">Vehicle Accident</option>
-                <option value="Medical Assist">Medical Assist</option>
-                <option value="Hazmat">Hazmat</option>
-                <option value="Rescue">Rescue</option>
-                <option value="False Alarm">False Alarm</option>
-                <option value="Other">Other</option>
+              <select id="callCategory" onchange="onCategoryChange()">
+                <option value="">— Select Category —</option>
+                <option value="Fire">🔥 Fire</option>
+                <option value="Medical">🚑 Medical / EMS</option>
+                <option value="Rescue">🛟 Rescue Services</option>
               </select>
-              <input type="text" id="callLocation" placeholder="Location / Address" />
+            </div>
+
+            <div id="subtypeContainer" class="form-row hidden">
+              <!-- filled by JS -->
+            </div>
+
+            <div class="form-row">
+              <input type="text" id="callLocation" placeholder="Location / Address / Landmark" />
             </div>
             <div class="form-row">
-              <textarea id="callDesc" placeholder="Description / additional info"></textarea>
+              <textarea id="callDesc" placeholder="Additional details / remarks"></textarea>
             </div>
             <div class="form-row">
-              <input type="text" id="callLat" placeholder="Latitude" readonly />
-              <input type="text" id="callLng" placeholder="Longitude" readonly />
+              <input type="text" id="callLat" placeholder="Lat" readonly />
+              <input type="text" id="callLng" placeholder="Lng" readonly />
             </div>
             <div class="form-row">
-              <button class="btn btn-sm btn-secondary" onclick="getMyLocation(false)">📍 GPS</button>
-              <button class="btn btn-sm btn-secondary" id="pinCallBtn" onclick="startPinMode('call')">📌 Pin on Map</button>
+              <button class="btn btn-sm" onclick="getMyLocation(false)">📍 GPS</button>
+              <button class="btn btn-sm" id="pinCallBtn" onclick="startPinMode('call')">📌 PIN ON MAP</button>
             </div>
-            <button class="btn" onclick="createCall()">Create Call</button>
+            <button class="btn btn-primary" onclick="createCall()">CREATE INCIDENT</button>
           </div>
 
           <div class="section">
-            <h3>Calls / Incidents</h3>
+            <div class="section-title">ACTIVE / ALL INCIDENTS</div>
             <div id="dispatchCallList"></div>
           </div>
 
           <div class="section">
-            <h3>Unit Status</h3>
+            <div class="section-title">UNIT STATUS</div>
             <div id="unitList"></div>
           </div>
 
           <div class="section">
-            <h3>Reports from Responders</h3>
+            <div class="section-title">REPORTS FROM UNITS</div>
             <div id="dispatchReports"></div>
           </div>
 
           <div class="section">
-            <h3>Broadcast / Relay Info</h3>
+            <div class="section-title">BROADCAST / RELAY</div>
             <div id="dispatchMessages"></div>
             <div class="msg-input-row">
-              <input type="text" id="dispatchMsgInput" placeholder="Type message…" />
-              <button class="btn btn-sm" onclick="sendMessage()">Send</button>
+              <input type="text" id="dispatchMsgInput" placeholder="Message to all units…" />
+              <button class="btn btn-sm" onclick="sendMessage()">SEND</button>
             </div>
             <div class="voice-row">
-              <button class="btn btn-sm btn-secondary" id="recBtn" onclick="toggleRecord()">🎤 Record Voice</button>
+              <button class="btn btn-sm" id="recBtn" onclick="toggleRecord()">🎤 RECORD</button>
               <span id="recStatus"></span>
-              <button class="btn btn-sm" id="sendVoiceBtn" onclick="sendVoice()" style="display:none;">Send Voice</button>
+              <button class="btn btn-sm btn-primary" id="sendVoiceBtn" onclick="sendVoice()" style="display:none;">SEND VOICE</button>
             </div>
           </div>
         </div>
 
-        <!-- ========== RESPONDER MDT PANEL ========== -->
+        <!-- RESPONDER -->
         <div id="responderPanel" class="hidden">
-          <div class="panel-title">📱 Responder MDT</div>
+          <div class="panel-header">📱 UNIT MDT</div>
 
           <div class="section">
-            <h3>My Unit Status</h3>
+            <div class="section-title">MY UNIT STATUS</div>
             <div id="myStatus"></div>
           </div>
 
           <div class="section">
-            <h3>Active Calls</h3>
+            <div class="section-title">ACTIVE INCIDENTS</div>
             <div id="responderCallList"></div>
           </div>
 
           <div class="section">
-            <h3>Report Incident or Info</h3>
+            <div class="section-title">REPORT / INFO</div>
             <div class="form-row">
-              <textarea id="reportText" placeholder="What do you need to report?"></textarea>
+              <textarea id="reportText" placeholder="Report details…"></textarea>
             </div>
             <div class="form-row">
               <input type="text" id="reportLocation" placeholder="Location (optional)" />
             </div>
             <div class="form-row">
-              <button class="btn btn-sm btn-secondary" onclick="getMyLocation(true)">📍 GPS</button>
-              <button class="btn btn-sm btn-secondary" id="pinReportBtn" onclick="startPinMode('report')">📌 Pin on Map</button>
+              <button class="btn btn-sm" onclick="getMyLocation(true)">📍 GPS</button>
+              <button class="btn btn-sm" id="pinReportBtn" onclick="startPinMode('report')">📌 PIN</button>
             </div>
-            <button class="btn" onclick="submitReport()">Submit Report</button>
+            <button class="btn btn-primary" onclick="submitReport()">SUBMIT REPORT</button>
           </div>
 
           <div class="section">
-            <h3>Messages from Dispatch</h3>
+            <div class="section-title">MESSAGES</div>
             <div id="responderMessages"></div>
             <div class="msg-input-row">
-              <input type="text" id="responderMsgInput" placeholder="Reply / message…" />
-              <button class="btn btn-sm" onclick="sendMessage()">Send</button>
+              <input type="text" id="responderMsgInput" placeholder="Reply…" />
+              <button class="btn btn-sm" onclick="sendMessage()">SEND</button>
             </div>
           </div>
 
           <div class="section">
-            <h3>Recent Reports</h3>
+            <div class="section-title">RECENT REPORTS</div>
             <div id="responderReports"></div>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT MAP -->
+      <!-- MAP -->
       <div class="map-panel" id="mapPanel">
         <div class="map-header">
-          🗺️ Active Operations Map
-          <button class="btn btn-sm btn-secondary" onclick="toggleMap()" style="float:right;">Close</button>
+          🗺️ ACTIVE OPERATIONS
+          <button class="btn btn-sm" onclick="toggleMap()">CLOSE</button>
         </div>
         <div id="map"></div>
       </div>
@@ -168,8 +172,8 @@
       <h3 id="modalTitle">Assign Units</h3>
       <div id="modalBody"></div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn" id="modalConfirm">Confirm</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modalConfirm">Confirm</button>
       </div>
     </div>
   </div>
